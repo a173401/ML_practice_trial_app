@@ -41,7 +41,7 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
-    restart: always
+    restart: on-failure
 
   database:
     image: docker.io/postgres:17.2
