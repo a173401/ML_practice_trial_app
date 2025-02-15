@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import List
 from .trial import TrialController
 from .database.trial_repository import TrialRepository
 from .models.trial_dto import Trial, TrialStatus
@@ -14,8 +15,14 @@ class TrialService:
         trial = self.trial_repository.create_trial(trial)
         return trial
     
+    def update_trial(self, updated_trial: Trial) -> Trial:
+        return self.trial_repository.update_trial(updated_trial)
+    
     def get_trial_by_user_request(self, user_request_id: UUID) -> Trial:
         return self.trial_repository.get_trial_by_user_request_id(user_request_id)
+    
+    def get_trials_user_requests(self, user_request_ids: List[UUID]) -> List[Trial]:
+        return self.trial_repository.get_trials_by_user_requests_ids(user_request_ids)
     
     def get_trial_by_id(self, trial_id: UUID) -> Trial:
         return self.trial_repository.get_trial_by_id(trial_id)

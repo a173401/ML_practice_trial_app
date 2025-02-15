@@ -2,7 +2,7 @@ from enum import Enum
 from uuid import UUID
 from .common_models_dto import BaseEntity
 
-class AgentType(Enum):
+class AgentType(str, Enum):
     OPTIMIST = "optimistic"
     PESSIMIST = "pessimistic"
     COORDINATOR = "coordinator"

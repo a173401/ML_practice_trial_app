@@ -109,6 +109,7 @@ class UserAccountsRepository:
         db_user.email = user.email
         db_user.hashed_password = user.hashed_password
         db_user.role = user.role
+        db_user.disabled = user.disabled
         self.session.add(db_user)
         self.session.commit()
         self.session.refresh(db_user)

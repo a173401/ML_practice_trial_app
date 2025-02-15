@@ -132,6 +132,12 @@ class TrialRepository:
         result = self.session.exec(statement)
         db_trials = result.all()
         return [self._convert_to_trial(db_trial) for db_trial in db_trials]
+    
+    def get_trials_by_user_requests_ids(self, user_requests_ids: List[UUID]) -> List[Trial]:
+        statement = select(TrialSchema).where(TrialSchema.user_request_id.in_(user_requests_ids))
+        result = self.session.exec(statement)
+        db_trials = result.all()
+        return [self._convert_to_trial(db_trial) for db_trial in db_trials]
 
     def _convert_to_trial(self, db_trial: TrialSchema) -> Trial:
         agents = [Agent(**agent.model_dump()) for agent in db_trial.agents]

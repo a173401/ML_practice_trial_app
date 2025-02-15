@@ -1,4 +1,6 @@
 from hashlib import sha256
+from typing import List
+from uuid import UUID
 from lib.models.user_account_dto import User, UserRole
 from lib.models.user_request_dto import UserRequest
 from lib.database.user_account_repository import UserAccountsRepository
@@ -42,10 +44,23 @@ class UserService:
 
     def delete_user(self, user: User):
         self.user_repository.delete_user(user.id)
+
+    def change_password(self, user: User, new_password: str):
+        db_user = self.user_repository.get_user_by_id(user.id)
+        db_user.hashed_password = self._hash_password(new_password)
+        self.user_repository.update_user(db_user)
+        return db_user
     
     def check_password(self, user: User, password: str) -> bool:
+        db_user = self.user_repository.get_user_by_id(user.id)
         hashed_password = self._hash_password(password)
-        return hashed_password == user.hashed_password
+        return hashed_password == db_user.hashed_password
+    
+    def list_users(self) -> List[User]:
+        return self.user_repository.list_users()
+    
+    def get_user_by_id(self, user_id: UUID) -> User:
+        return self.user_repository.get_user_by_id(user_id)
 
     def get_user_by_username(self, username: str) -> User:
         return self.user_repository.get_user_by_username(username)
@@ -53,3 +68,6 @@ class UserService:
     def create_user_request(self, user: User, url_to_process: str) -> UserRequest:
         user_request = self.user_repository.create_user_request(UserRequest(user_id=user.id, advert_url=url_to_process))
         return user_request
+    
+    def get_user_requests(self, user: User) -> List[UserRequest]:        
+        return self.user_repository.list_user_requests(user.id)

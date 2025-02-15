@@ -21,9 +21,3 @@ class ParsedAdvert(BaseModel):
     context: Optional[str] = None
     parsed_at: datetime = Field(default_factory=datetime.now)
 
-
-class SystemConfig(BaseModel):
-    cost_per_request: float = 1.0
-    max_rounds: int = 5
-    min_balance: float = 0.0
-    default_credits: float = 10.0

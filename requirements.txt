@@ -7,3 +7,6 @@ sqlalchemy == 2.0.37
 sqlmodel == 0.0.22
 pytest == 8.3.4
 psycopg2-binary == 2.9.10
+redis == 5.2.1
+httpx == 0.28.1
+requests == 2.32.3

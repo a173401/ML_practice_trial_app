@@ -1,12 +1,12 @@
 import pytest
-from app import Settings
+from lib.app.settings import Settings
 from sqlmodel import Field, SQLModel, create_engine
 
 @pytest.fixture(scope="session")
 def settings():
     return Settings()
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def database_engine(settings: Settings):
     # Setup code to create a database session
     engine = create_engine(
