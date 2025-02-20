@@ -3,6 +3,7 @@ from typing import List
 from uuid import UUID
 from lib.models.user_account_dto import User, UserRole
 from lib.models.user_request_dto import UserRequest
+from lib.models.attachment_dto import Attachment
 from lib.database.user_account_repository import UserAccountsRepository
 
 class UserService:
@@ -65,9 +66,17 @@ class UserService:
     def get_user_by_username(self, username: str) -> User:
         return self.user_repository.get_user_by_username(username)
     
-    def create_user_request(self, user: User, url_to_process: str) -> UserRequest:
-        user_request = self.user_repository.create_user_request(UserRequest(user_id=user.id, advert_url=url_to_process))
+    def create_user_request(self, user: User, price: float, description: str, 
+                            attachments: List[Attachment]) -> UserRequest:
+
+        user_request = self.user_repository.create_user_request(UserRequest(user_id=user.id,
+                                                                            attachments=attachments,
+                                                                            price=price,
+                                                                            description=description))
         return user_request
     
+    def get_user_request_by_id(self, request_id: UUID) -> UserRequest:
+        return self.user_repository.get_user_request_by_id(request_id)
+
     def get_user_requests(self, user: User) -> List[UserRequest]:        
         return self.user_repository.list_user_requests(user.id)

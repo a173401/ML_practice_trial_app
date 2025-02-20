@@ -38,12 +38,20 @@ class TransactionSchema(BaseEntity, table=True):
     trial_id: Optional[uuid.UUID] = Field(default=None, foreign_key="trials.id")
     request_id: Optional[uuid.UUID] = Field(default=None, foreign_key="user_requests.id")
 
+class UserRequestAttachmentLinkSchema(BaseEntity, table=True):
+    __tablename__ = "user_request_attachment_links"
+
+    user_request_id: uuid.UUID = Field(foreign_key="user_requests.id")
+    attachment_id: uuid.UUID = Field(foreign_key="attachments.id")
+
 class UserRequestSchema(BaseEntity, table=True):
     __tablename__ = "user_requests"
 
     user_id: uuid.UUID = Field(foreign_key="users.id")
     user: UserSchema = Relationship()
-    advert_url: str
+    attachments: List["AttachmentSchema"] = Relationship(link_model=UserRequestAttachmentLinkSchema)
+    price: float
+    description: str
 
 class TrialAgentLinkSchema(BaseEntity, table=True):
     __tablename__ = "trial_agent_links" 
@@ -84,3 +92,8 @@ class TrialSchema(BaseEntity, table=True):
     status: TrialStatus
     max_rounds: int
 
+class AttachmentSchema(BaseEntity, table=True):
+    __tablename__ = "attachments"
+
+    object_name: str
+    content_type: str

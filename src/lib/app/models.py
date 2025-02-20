@@ -3,8 +3,9 @@ from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 from lib.models.user_account_dto import UserRole
-from lib.models.agent_dto import AgentType
+from lib.models.agent_dto import AgentType, Agent
 from lib.models.trial_dto import TrialStatus
+from lib.models.attachment_dto import Attachment
 
 class LoginRequest(BaseModel):
     username: str
@@ -36,7 +37,10 @@ class AccessToken(BaseModel):
     expires_at: datetime
 
 class TrialRequest(BaseModel):
-    advert_url: str
+    current_price: float
+    description: str
+    attachments: list[Attachment]
+    agents: List[Agent]
 
 class TrialStatusResponse(BaseModel):
     request_id: UUID

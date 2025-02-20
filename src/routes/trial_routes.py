@@ -1,8 +1,10 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
+from pika.adapters.blocking_connection import BlockingChannel
 from lib.app.models import TrialRequest, TrialStatusResponse, TrialResult
 from lib.app.verifiers import verify_token, only_admin
 from lib.app.services import get_user_service, get_trial_service, get_user_account_service
+from lib.app.common import get_rabbitmq
 from lib.app.settings import SystemConfig
 from lib.trial_service import TrialService
 from lib.models.trial_dto import Trial
@@ -10,6 +12,7 @@ from lib.user_service import UserService
 from lib.user_account_service import UserAccountService
 from lib.models.user_account_dto import User
 from lib.models.trial_dto import Trial, TrialStatus
+from lib.models.mq_events import MQEvent
 from lib.database.trial_repository import ExceptionTrialNotFound
 from typing import Annotated, List
 
@@ -19,17 +22,25 @@ router = APIRouter(tags=["Trial"], dependencies=[Depends(verify_token)])
 async def request_trial(trial_request: TrialRequest, 
                         user_service: Annotated[UserService, Depends(get_user_service)],
                         user_account_service: Annotated[UserAccountService, Depends(get_user_account_service)],
+                        rabbitmq_channel: Annotated[BlockingChannel, Depends(get_rabbitmq)],
                         trial_service: Annotated[TrialService, Depends(get_trial_service)], 
                         user: Annotated[User, Depends(verify_token)]):
     
     user_account = user_account_service.get_user_account(user)
     if user_account.balance < 0:
         raise HTTPException(status_code=403, detail="Insufficient funds")
-    user_request = user_service.create_user_request(user, trial_request.advert_url)
+    user_request = user_service.create_user_request(user, price=trial_request.current_price,
+                                                    description=trial_request.description,
+                                                    attachments=trial_request.attachments)
     config = SystemConfig()
-    trial = trial_service.create_trial(user_request, "", config.max_rounds)
-    ### Здесь будет передача сообщений в очередь на обработку 
-    ###
+    trial = trial_service.create_trial(user_request, "", config.max_rounds, agents=trial_request.agents)
+    event = MQEvent(user_request_id=user_request.id, trial_id=trial.id)
+    rabbitmq_channel.basic_publish(
+        exchange="common_exchange",
+        routing_key="analysis",
+        body=event.model_dump_json()
+    )
+
     return TrialStatusResponse(
         request_id=user_request.id,
         trial_id=trial.id,

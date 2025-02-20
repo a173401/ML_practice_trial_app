@@ -10,8 +10,11 @@ class TrialService:
     def __init__(self, trial_repository: TrialRepository):
         self.trial_repository = trial_repository
     
-    def create_trial(self, user_request: UserRequest, context: str, max_rounds: int = 5) -> Trial:
-        trial = Trial(user_request_id=user_request.id, agents=[], context=context, communication_history=[], max_rounds=max_rounds)
+    def create_trial(self, user_request: UserRequest, context: str, max_rounds: int = 5,
+                     agents: List[Agent] = None) -> Trial:
+        if agents is None:
+            agents = [] 
+        trial = Trial(user_request_id=user_request.id, agents=agents, context=context, communication_history=[], max_rounds=max_rounds)
         trial = self.trial_repository.create_trial(trial)
         return trial
     

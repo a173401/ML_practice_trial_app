@@ -1,4 +1,4 @@
-
+import re
 from typing import List
 from .models.trial_dto import Trial, TrialStatus
 from .models.agent_dto import Agent, AgentType, AgentResponse
@@ -38,12 +38,19 @@ class TrialController:
                 round_responses.append(response)
         return round_responses
     
-    def _extract_price(self, AgentResponse) -> float:
-        # Реализация извлечения цены из ответа агента
-        return 0.0
+    def _extract_price(self, response: AgentResponse) -> float:
+        price_match = re.search(r'<price>(.*?)</price>', response.response)
+
+        if price_match:
+            final_price = float(price_match.group(1))
+            return final_price
+        else:
+            return 0.0
 
     def start_trial(self) -> "Trial":
-
+        if self.trial.status == TrialStatus.COMPLETED:
+            return self.trial
+        
         for agent in self.trial.agents:
             agent_controller = AgentController(agent, self.llm_provider, self.agents_response_repository)
             self.agents_controllers.append(agent_controller)
@@ -94,7 +101,7 @@ class TrialController:
             self.trial.communication_history.append(anouncement)
             self.trial = self.trial_repository.update_trial(self.trial)
         
-        summary = coordinator_agent_controller.execute_instruction("На основе представленного обсуждения выбери оптимальную стоимость автомобиля и напиши финальное резюме", 
+        summary = coordinator_agent_controller.execute_instruction("На основе представленного обсуждения выбери оптимальную стоимость автомобиля и напиши финальное резюме. Финальную цену напиши внутри следующей структуры <price></price> в виде удобном для парсинга. Тип данных float", 
                                                                    self.trial.id,
                                                                    self.trial.communication_history)
         self.trial.summary = summary.response

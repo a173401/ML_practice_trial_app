@@ -8,6 +8,7 @@ from lib.database.user_account_repository import UserAccountsRepository
 from lib.database.transaction_repository import TransactionRepository
 from lib.database.trial_repository import TrialRepository
 from lib.database.agents_repository import AgentRepository
+from lib.database.attachment_repository import AttachmentRepository
 from lib.trial_service import TrialService
 from lib.user_account_service import UserAccountService
 
@@ -22,3 +23,6 @@ def get_trial_service(session: Annotated[Session, Depends(get_session)]) -> Tria
 
 def get_agent_service(session: Annotated[Session, Depends(get_session)]) -> AgentService:
     return AgentService(AgentRepository(session))
+
+def get_attachment_repository(session: Annotated[Session, Depends(get_session)]) -> AttachmentRepository:
+    return AttachmentRepository(session)

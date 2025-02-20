@@ -11,6 +11,7 @@ from routes.admin_routes import router as admin_router
 from routes.account_routes import router as account_router
 from routes.trial_routes import router as trial_router
 from routes.agent_routes import router as agent_router
+from routes.attachment_routes import router as attachment_router
 from typing import Annotated
 
 
@@ -30,6 +31,7 @@ app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(account_router, prefix="/accounts", tags=["Account"])
 app.include_router(trial_router, prefix="/trials", tags=["Trial"])
 app.include_router(agent_router, prefix="/agents", tags=["Agent"])
+app.include_router(attachment_router, prefix="/attachments", tags=["Attachment"])
 
 @app.get("/")
 def read_root(settings = Depends(get_settings)):

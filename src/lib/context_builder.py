@@ -16,4 +16,4 @@ class ContextBuilder:
     def generate_context(self):
         for section in self.sections:
             self.mdFile.new_paragraph(section)
-        return self.mdFile.get_md_string()
+        return self.mdFile.get_md_text()
