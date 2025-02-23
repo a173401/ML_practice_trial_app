@@ -8,10 +8,7 @@ def settings():
 
 @pytest.fixture(scope="module", autouse=True)
 def database_engine(settings: Settings):
-    # Setup code to create a database session
-    engine = create_engine(
-        f"postgresql://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}/{settings.postgres_db}",
-    )
+    engine = create_engine("sqlite:///:memory:")  # Use an in-memory SQLite database for testing
     SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
     yield engine

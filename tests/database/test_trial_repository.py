@@ -10,6 +10,8 @@ from lib.database.agent_response_repository import AgentResponseRepository
 from lib.database.user_account_repository import UserAccountsRepository, ExceptionUserRequestNotFound, ExceptionUserNotFound
 from lib.models.user_account_dto import User, UserRole
 from lib.models.user_request_dto import UserRequest
+from lib.models.attachment_dto import Attachment
+from lib.database.attachment_repository import AttachmentRepository 
 
 @pytest.fixture(scope="function", autouse=True)
 def drop_tables(database_engine):
@@ -39,6 +41,11 @@ def user_accounts_repository(database_engine):
         yield UserAccountsRepository(session)
 
 @pytest.fixture(scope="function")
+def attachment_repository(database_engine):
+    with Session(database_engine) as session:
+        yield AttachmentRepository(session)
+
+@pytest.fixture(scope="function")
 def test_user(user_accounts_repository: UserAccountsRepository):
     user = User(
         username="trial_test_user",
@@ -50,8 +57,27 @@ def test_user(user_accounts_repository: UserAccountsRepository):
     yield created_user
 
 @pytest.fixture(scope="function")
-def test_user_request(user_accounts_repository: UserAccountsRepository, test_user: User):
-    request = UserRequest(user_id=test_user.id, advert_url="http://test.com")
+def test_attachment(attachment_repository: AttachmentRepository):
+    attachment = Attachment(
+        id=uuid4(),
+        object_name="test_file.txt",
+        content_type="text/plain"
+    )
+    created_attachment = attachment_repository.create_attachment(
+        attachment_id=attachment.id,
+        object_name=attachment.object_name,
+        content_type=attachment.content_type
+    )
+    yield created_attachment
+
+@pytest.fixture(scope="function")
+def test_user_request(user_accounts_repository: UserAccountsRepository, test_user: User, test_attachment: Attachment):
+    request = UserRequest(
+        user_id=test_user.id,
+        attachments=[test_attachment],
+        price=100.0,
+        description="Test user request"
+    )
     created_request = user_accounts_repository.create_user_request(request)
     yield created_request
 
@@ -95,6 +121,7 @@ def test_trial(trial_repository: TrialRepository,
     yield created_trial
 
 
+@pytest.mark.unit
 def test_create_trial(trial_repository: TrialRepository, test_user_request: UserRequest, test_agent: Agent):
     trial = Trial(
         user_request_id=test_user_request.id,
@@ -111,10 +138,12 @@ def test_create_trial(trial_repository: TrialRepository, test_user_request: User
     assert created_trial.context == "New Trial Context"
     assert created_trial.agents[0].id == test_agent.id
 
+@pytest.mark.unit
 def test_create_trial_existing(trial_repository, test_trial):
     with pytest.raises(ExceptionTrialExists):
         trial_repository.create_trial(test_trial)
 
+@pytest.mark.unit
 def test_get_trial_by_id(trial_repository, test_trial):
     retrieved_trial = trial_repository.get_trial_by_id(test_trial.id)
     assert retrieved_trial.id == test_trial.id
@@ -122,6 +151,7 @@ def test_get_trial_by_id(trial_repository, test_trial):
     assert retrieved_trial.agents[0].id == test_trial.agents[0].id
     assert retrieved_trial.communication_history[0].response == test_trial.communication_history[0].response
 
+@pytest.mark.unit
 def test_get_trial_by_user_request_id(trial_repository, test_trial):
     retrieved_trial = trial_repository.get_trial_by_user_request_id(test_trial.user_request_id)
     assert retrieved_trial.id == test_trial.id
@@ -129,10 +159,12 @@ def test_get_trial_by_user_request_id(trial_repository, test_trial):
     assert retrieved_trial.agents[0].id == test_trial.agents[0].id
     assert retrieved_trial.communication_history[0].response == test_trial.communication_history[0].response
 
+@pytest.mark.unit
 def test_get_trial_not_found(trial_repository):
     with pytest.raises(ExceptionTrialNotFound):
         trial_repository.get_trial_by_id(UUID("12345678-1234-5678-1234-567812345678"))
 
+@pytest.mark.unit
 def test_update_trial(trial_repository, test_trial, test_agent):
     updated_trial = Trial(
         id=test_trial.id,
@@ -154,16 +186,19 @@ def test_update_trial(trial_repository, test_trial, test_agent):
     assert updated_trial.max_rounds == 4
     assert updated_trial.status == TrialStatus.COMPLETED
 
+@pytest.mark.unit
 def test_delete_trial(trial_repository, test_trial):
     trial_repository.delete_trial(test_trial.id)
     with pytest.raises(ExceptionTrialNotFound):
         trial_repository.get_trial_by_id(test_trial.id)
 
+@pytest.mark.unit
 def test_list_trials(trial_repository, test_trial):
     trials = trial_repository.list_trials()
     assert len(trials) >= 1
     assert any(trial.id == test_trial.id for trial in trials)
 
+@pytest.mark.unit
 def test_list_trials_with_limit(trial_repository, test_trial):
     trials = trial_repository.list_trials(amount=1)
     assert len(trials) == 1

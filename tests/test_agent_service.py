@@ -19,6 +19,7 @@ def agent_service(agent_repository):
     service = AgentService(agent_repository)
     yield service
 
+@pytest.mark.unit
 def test_create_agent(agent_service):
     agent_name = f"TestAgent_{uuid.uuid4()}"
     agent = agent_service.create_agent(
@@ -34,6 +35,7 @@ def test_create_agent(agent_service):
     assert agent.agent_type == AgentType.OPTIMIST
     assert agent.cost_per_token == 0.01
 
+@pytest.mark.unit
 def test_get_agent_by_id(agent_service):
     agent_name = f"TestAgent_{uuid.uuid4()}"
     created_agent = agent_service.create_agent(
@@ -47,6 +49,7 @@ def test_get_agent_by_id(agent_service):
     assert retrieved_agent.id == created_agent.id
     assert retrieved_agent.name == agent_name
 
+@pytest.mark.unit
 def test_list_agents(agent_service):
     amount_before = len(agent_service.list_agents())
     agent_service.create_agent(
@@ -66,6 +69,7 @@ def test_list_agents(agent_service):
     agents = agent_service.list_agents()
     assert len(agents) - amount_before == 2
 
+@pytest.mark.unit
 def test_update_agent(agent_service):
     agent_name = f"TestAgent_{uuid.uuid4()}"
     created_agent = agent_service.create_agent(
@@ -83,6 +87,7 @@ def test_update_agent(agent_service):
     assert updated_agent.name == "UpdatedAgent"
     assert updated_agent.cost_per_token == 0.02
 
+@pytest.mark.unit
 def test_delete_agent(agent_service):
     agent_name = f"TestAgent_{uuid.uuid4()}"
     created_agent = agent_service.create_agent(

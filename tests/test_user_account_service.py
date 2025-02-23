@@ -53,9 +53,12 @@ def user_request():
     return UserRequest(
         id=uuid.uuid4(),
         user_id=uuid.uuid4(),
-        advert_url="http://example.com"
+        attachments=[],  
+        price=100.0,     
+        description="Test user request"  
     )
 
+@pytest.mark.unit
 def test_create_user_account(user_account_service, user_repository_mock, user):
     initial_amount = 100.0
     account = Account(
@@ -70,11 +73,13 @@ def test_create_user_account(user_account_service, user_repository_mock, user):
     user_repository_mock.create_account.assert_called_once_with(user, initial_amount)
     assert created_account == account
 
+@pytest.mark.unit
 def test_delete_user_account(user_account_service, user_repository_mock, account):
     user_account_service.delete_user_account(account)
 
     user_repository_mock.delete_account.assert_called_once_with(account.id)
 
+@pytest.mark.unit
 def test_get_user_account(user_account_service, user_repository_mock, user, account):
     user_repository_mock.get_account_by_user_id.return_value = account
 
@@ -83,6 +88,7 @@ def test_get_user_account(user_account_service, user_repository_mock, user, acco
     user_repository_mock.get_account_by_user_id.assert_called_once_with(user.id)
     assert retrieved_account == account
 
+@pytest.mark.unit
 def test_deposit(user_account_service, user_repository_mock, transaction_repository_mock, account):
     amount = 50.0
     description = "Test deposit"
@@ -110,6 +116,7 @@ def test_deposit(user_account_service, user_repository_mock, transaction_reposit
     )
     assert deposited_account == updated_account
 
+@pytest.mark.unit
 def test_deduct(user_account_service, user_repository_mock, transaction_repository_mock, account, trial, user_request):
     amount = 30.0
     description = "Test deduction"
@@ -138,6 +145,7 @@ def test_deduct(user_account_service, user_repository_mock, transaction_reposito
     )
     assert deducted_account == updated_account
 
+@pytest.mark.unit
 def test_deduct_insufficient_funds(user_account_service, user_repository_mock, transaction_repository_mock, account, trial, user_request):
     amount = 150.0
     description = "Test deduction"
@@ -150,6 +158,7 @@ def test_deduct_insufficient_funds(user_account_service, user_repository_mock, t
 
     user_repository_mock.get_account_by_id.assert_called_once_with(account.id)
 
+@pytest.mark.unit
 def test_list_accounts(user_account_service, user_repository_mock):
     accounts = [
         Account(id=uuid.uuid4(), user_id=uuid.uuid4(), balance=100.0),

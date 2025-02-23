@@ -1,3 +1,3 @@
 #!/bin/bash
 
-PYTHONPATH=src pytest tests
+PYTHONPATH=src pytest -m unit tests
