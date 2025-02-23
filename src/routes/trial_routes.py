@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from pika.adapters.blocking_connection import BlockingChannel
 from lib.app.models import TrialRequest, TrialStatusResponse, TrialResult
 from lib.app.verifiers import verify_token, only_admin
@@ -78,7 +78,7 @@ async def get_completed_trials(trial_service: Annotated[TrialService, Depends(ge
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No trials found",
         )
-    completed_trials = [t for t in trials if t.status == TrialStatus.COMPLETED]
+    completed_trials = [t for t in trials if t.status in [TrialStatus.COMPLETED, TrialStatus.FAILED]]
     return completed_trials
 
 
@@ -94,10 +94,7 @@ async def get_trial_result(trial_service: Annotated[TrialService, Depends(get_tr
         )
     
     if trial.status != TrialStatus.COMPLETED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Trial is not completed yet",
-        )
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     return TrialResult(request_id=trial.user_request_id, final_price=trial.final_price, summary=trial.summary)
 

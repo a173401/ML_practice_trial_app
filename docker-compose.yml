@@ -28,6 +28,19 @@ services:
       - rabbitmq
       - database
       - cache
+  
+  webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ml_practice
+    command: streamlit run webui/web_main.py --server.port 8501
+    volumes:
+      - ./src:/opt/app/
+    environment:
+        - PYTHONPATH=.
+        - BACKEND_URL=http://app:8000
+
   analysis_worker:
    build:
      context: .
@@ -66,6 +79,10 @@ services:
       dockerfile: Dockerfile
     image: ml_practice
     command: python worker/trial_worker.py
+    deploy:
+      mode: replicated
+      replicas: 3
+
     environment:
       - PYTHONPATH=.
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
@@ -93,6 +110,7 @@ services:
   nginx:
     depends_on:
       - app
+      - webui
     image: docker.io/nginx:latest
     ports:
       - "8080:80"
