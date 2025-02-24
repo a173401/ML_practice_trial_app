@@ -46,9 +46,12 @@ def user_request(user):
     return UserRequest(
         id=uuid.uuid4(),
         user_id=user.id,
-        advert_url="http://example.com"
+        attachments=[],  
+        price=100.0,     
+        description="Test user request"  
     )
 
+@pytest.mark.unit
 def test_create_user(user_service, user_repository_mock, user_data):
     user_repository_mock.create_user.return_value = User(
         username=user_data["username"],
@@ -72,6 +75,7 @@ def test_create_user(user_service, user_repository_mock, user_data):
     assert created_user.role == user_data["role"]
     assert created_user.disabled is False
 
+@pytest.mark.unit
 def test_create_user_with_existing_email(user_service, user_repository_mock, user_data):
     user_repository_mock.create_user.side_effect = ExceptionUserExists("User already exists")
 
@@ -86,6 +90,7 @@ def test_create_user_with_existing_email(user_service, user_repository_mock, use
         disabled=False
     ))
 
+@pytest.mark.unit
 def test_disable_user(user_service, user_repository_mock, user):
     user_repository_mock.get_user_by_id.return_value = user
     user_repository_mock.update_user.return_value = user
@@ -96,6 +101,7 @@ def test_disable_user(user_service, user_repository_mock, user):
     user_repository_mock.update_user.assert_called_once_with(user)
     assert disabled_user.disabled is True
 
+@pytest.mark.unit
 def test_enable_user(user_service, user_repository_mock, user):
     user_repository_mock.get_user_by_id.return_value = user
     user_repository_mock.update_user.return_value = user
@@ -106,6 +112,7 @@ def test_enable_user(user_service, user_repository_mock, user):
     user_repository_mock.update_user.assert_called_once_with(user)
     assert enabled_user.disabled is False
 
+@pytest.mark.unit
 def test_delete_user(user_service, user_repository_mock, user):
     user_repository_mock.delete_user.return_value = None
 
@@ -113,11 +120,14 @@ def test_delete_user(user_service, user_repository_mock, user):
 
     user_repository_mock.delete_user.assert_called_once_with(user.id)
 
-def test_check_password(user_service, user):
+@pytest.mark.unit
+def test_check_password(user_service, user_repository_mock, user):
     password = "testpassword"
+    user_repository_mock.get_user_by_id.return_value = user
     assert user_service.check_password(user, password) is True
     assert user_service.check_password(user, "wrongpassword") is False
 
+@pytest.mark.unit
 def test_get_user_by_username(user_service, user_repository_mock, user):
     user_repository_mock.get_user_by_username.return_value = user
 
@@ -126,10 +136,13 @@ def test_get_user_by_username(user_service, user_repository_mock, user):
     user_repository_mock.get_user_by_username.assert_called_once_with(user.username)
     assert retrieved_user == user
 
+@pytest.mark.unit
 def test_create_user_request(user_service, user_repository_mock, user, user_request):
     user_repository_mock.create_user_request.return_value = user_request
 
-    created_user_request = user_service.create_user_request(user, user_request.advert_url)
+    created_user_request = user_service.create_user_request(user, user_request.price, user_request.description, user_request.attachments)
 
     assert created_user_request.user_id == user.id
-    assert created_user_request.advert_url == user_request.advert_url
+    assert created_user_request.price == user_request.price
+    assert created_user_request.description == user_request.description
+    assert created_user_request.attachments == user_request.attachments

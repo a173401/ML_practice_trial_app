@@ -45,7 +45,7 @@ def test_account(database_engine, test_user: UserSchema) -> AccountSchema:
 
 @pytest.fixture
 def test_user_request(database_engine, test_user: UserSchema) -> UserRequestSchema:
-    user_request = UserRequestSchema(user_id=test_user.id, advert_url="http://example.com")
+    user_request = UserRequestSchema(user_id=test_user.id, price=100.0, description="Test request", attachments=[])
     with Session(database_engine) as session:
         session.add(user_request)
         session.commit()
@@ -53,6 +53,7 @@ def test_user_request(database_engine, test_user: UserSchema) -> UserRequestSche
         session.delete(user_request)
         session.commit()
 
+@pytest.mark.unit
 def test_create_user(user_accounts_repository: UserAccountsRepository, database_engine) -> None:
     user = User(username="newuser", email="newuser@example.com", hashed_password="$2b$12$examplehash", role=UserRole.USER, disabled=False)
     created_user = user_accounts_repository.create_user(user)
@@ -68,11 +69,13 @@ def test_create_user(user_accounts_repository: UserAccountsRepository, database_
         session.delete(db_user)
         session.commit()
 
+@pytest.mark.unit
 def test_create_user_existing(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
     user = User(username=test_user.username, email=test_user.email, hashed_password="$2b$12$examplehash", role=UserRole.USER)
     with pytest.raises(ExceptionUserExists):
         user_accounts_repository.create_user(user)
 
+@pytest.mark.unit
 def test_create_account(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
     account = user_accounts_repository.create_account(test_user, 100.0)
     assert account.id is not None
@@ -80,10 +83,12 @@ def test_create_account(user_accounts_repository: UserAccountsRepository, test_u
     assert account.balance == 100.0
     
 
+@pytest.mark.unit
 def test_create_account_existing(user_accounts_repository: UserAccountsRepository, test_user: UserSchema, test_account: AccountSchema) -> None:
     with pytest.raises(ExceptionAccountExists):
         user_accounts_repository.create_account(test_user, 150.0)
 
+@pytest.mark.unit
 def test_get_user_by_id(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
     user = user_accounts_repository.get_user_by_id(test_user.id)
     assert user.id == test_user.id
@@ -91,7 +96,7 @@ def test_get_user_by_id(user_accounts_repository: UserAccountsRepository, test_u
     assert user.email == test_user.email
     assert user.role == test_user.role
     
-
+@pytest.mark.unit
 def test_get_user_by_username(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
     user = user_accounts_repository.get_user_by_username(test_user.username)
     assert user.id == test_user.id
@@ -99,26 +104,31 @@ def test_get_user_by_username(user_accounts_repository: UserAccountsRepository, 
     assert user.email == test_user.email
     assert user.role == test_user.role
 
+@pytest.mark.unit
 def test_get_user_not_found(user_accounts_repository: UserAccountsRepository) -> None:
     with pytest.raises(ExceptionUserNotFound):
         user_accounts_repository.get_user_by_id(UUID("12345678-1234-5678-1234-567812345678"))
 
+@pytest.mark.unit
 def test_get_account_by_id(user_accounts_repository: UserAccountsRepository, test_account: AccountSchema) -> None:
     account = user_accounts_repository.get_account_by_id(test_account.id)
     assert account.id == test_account.id
     assert account.user_id == test_account.user_id
     assert account.balance == test_account.balance
 
+@pytest.mark.unit
 def test_get_account_by_user_id(user_accounts_repository: UserAccountsRepository, test_account: AccountSchema) -> None:
     account = user_accounts_repository.get_account_by_user_id(test_account.user_id)
     assert account.id == test_account.id
     assert account.user_id == test_account.user_id
     assert account.balance == test_account.balance
 
+@pytest.mark.unit
 def test_get_account_not_found(user_accounts_repository: UserAccountsRepository) -> None:
     with pytest.raises(ExceptionAccountNotFound):
         user_accounts_repository.get_account_by_id(UUID("12345678-1234-5678-1234-567812345678"))
 
+@pytest.mark.unit
 def test_update_user(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
     updated_user = User(id=test_user.id, username="updateduser", email="updated@example.com", hashed_password="$2b$12$examplehash", role=UserRole.ADMIN)
     user = user_accounts_repository.update_user(updated_user)
@@ -127,6 +137,7 @@ def test_update_user(user_accounts_repository: UserAccountsRepository, test_user
     assert user.email == "updated@example.com"
     assert user.role == UserRole.ADMIN
 
+@pytest.mark.unit
 def test_update_account(user_accounts_repository: UserAccountsRepository, test_account: AccountSchema) -> None:
     updated_account = Account(id=test_account.id, user_id=test_account.user_id, balance=200.0)
     account = user_accounts_repository.update_account(updated_account)
@@ -134,51 +145,67 @@ def test_update_account(user_accounts_repository: UserAccountsRepository, test_a
     assert account.user_id == test_account.user_id
     assert account.balance == 200.0
 
+@pytest.mark.unit
 def test_delete_user(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
     user_accounts_repository.delete_user(test_user.id)
     with pytest.raises(ExceptionUserNotFound):
         user_accounts_repository.get_user_by_id(test_user.id)
 
+@pytest.mark.unit
 def test_delete_account(user_accounts_repository: UserAccountsRepository, test_account: AccountSchema) -> None:
     user_accounts_repository.delete_account(test_account.id)
     with pytest.raises(ExceptionAccountNotFound):
         user_accounts_repository.get_account_by_id(test_account.id)
 
+@pytest.mark.unit
 def test_list_accounts(user_accounts_repository: UserAccountsRepository, test_account: AccountSchema) -> None:
     accounts = user_accounts_repository.list_accounts()
     assert len(accounts) >= 1
     assert any(account.id == test_account.id for account in accounts)
 
+@pytest.mark.unit
 def test_list_users(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
     users = user_accounts_repository.list_users()
     assert len(users) >= 1
     assert any(user.id == test_user.id for user in users)
 
+
+@pytest.mark.unit
 def test_create_user_request(user_accounts_repository: UserAccountsRepository, test_user: UserSchema) -> None:
-    user_request = UserRequest(user_id=test_user.id, advert_url="http://example.com")
+    user_request = UserRequest(user_id=test_user.id, price=100.0, description="Test request", attachments=[])
     created_user_request = user_accounts_repository.create_user_request(user_request)
     assert created_user_request.id is not None
     assert created_user_request.user_id == test_user.id
-    assert created_user_request.advert_url == "http://example.com"
+    assert created_user_request.price == 100.0
+    assert created_user_request.description == "Test request"
+    assert created_user_request.attachments == []
 
+@pytest.mark.unit
 def test_get_user_request_by_id(user_accounts_repository: UserAccountsRepository, test_user_request: UserRequestSchema) -> None:
     user_request = user_accounts_repository.get_user_request_by_id(test_user_request.id)
     assert user_request.id == test_user_request.id
     assert user_request.user_id == test_user_request.user_id
-    assert user_request.advert_url == test_user_request.advert_url
+    assert user_request.price == test_user_request.price
+    assert user_request.description == test_user_request.description
+    assert user_request.attachments == []
 
+@pytest.mark.unit
 def test_list_user_requests(user_accounts_repository: UserAccountsRepository, test_user: UserSchema, test_user_request: UserRequestSchema) -> None:
     user_requests = user_accounts_repository.list_user_requests(test_user.id)
     assert len(user_requests) >= 1
     assert any(user_request.id == test_user_request.id for user_request in user_requests)
 
+@pytest.mark.unit
 def test_update_user_request(user_accounts_repository: UserAccountsRepository, test_user_request: UserRequestSchema) -> None:
-    updated_user_request = UserRequest(id=test_user_request.id, user_id=test_user_request.user_id, advert_url="http://updated.com")
+    updated_user_request = UserRequest(id=test_user_request.id, user_id=test_user_request.user_id, price=150.0, description="Updated request", attachments=[])
     user_request = user_accounts_repository.update_user_request(updated_user_request)
     assert user_request.id == test_user_request.id
     assert user_request.user_id == test_user_request.user_id
-    assert user_request.advert_url == "http://updated.com"
+    assert user_request.price == 150.0
+    assert user_request.description == "Updated request"
+    assert user_request.attachments == []
 
+@pytest.mark.unit
 def test_delete_user_request(user_accounts_repository: UserAccountsRepository, test_user_request: UserRequestSchema) -> None:
     user_accounts_repository.delete_user_request(test_user_request.id)
     with pytest.raises(ExceptionUserRequestNotFound):

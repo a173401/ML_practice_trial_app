@@ -1,8 +1,10 @@
+import pytest
 from lib.database.database_models import UserSchema, AccountSchema
 from lib.models.user_account_dto import UserRole
 from sqlmodel import Session, select
 
 
+@pytest.mark.unit
 def test_create_account(database_engine):
     # Create a user
     user = UserSchema(username="testuser", email="test@example.com", hashed_password="$2b$12$examplehash", 
@@ -15,4 +17,3 @@ def test_create_account(database_engine):
         session.refresh(user)
         assert account.id is not None
         assert account.user.id == user.id
-    

@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 from sqlmodel import Field, SQLModel, create_engine, Session
 from lib.models.user_account_dto import User, UserRole
 from lib.models.transaction_dto import Transaction, OperationType
@@ -20,6 +21,9 @@ from lib.trial_service import TrialService
 from lib.agent import AgentController
 from lib.trial import TrialController
 from lib.llm_interface import LLMProvider
+
+from lib.models.attachment_dto import Attachment
+from lib.database.attachment_repository import AttachmentRepository 
 
 
 class MockProvider(LLMProvider):
@@ -74,13 +78,19 @@ def trial_repository(session):
 def agent_response_repository(session):
     return AgentResponseRepository(session)
 
+@pytest.fixture(scope="function")
+def attachment_repository(database_engine):
+    with Session(database_engine) as session:
+        yield AttachmentRepository(session)
 
+@pytest.mark.unit
 def test_end_to_end(user_service: UserService, user_account_service: UserAccountService, 
                     agent_service: AgentService, 
                     trial_service: TrialService,
                     trial_repository: TrialRepository, 
                     agent_response_repository: AgentResponseRepository,
-                    user_accounts_repository: UserAccountsRepository):
+                    user_accounts_repository: UserAccountsRepository,
+                    attachment_repository: AttachmentRepository):  # Добавлен импорт attachment_repository
     # Create admin and user
     admin = user_service.create_user("admin", "admin_password", "admin@email.com", UserRole.ADMIN)
     user = user_service.create_user("user", "user_password", "user@email.com", UserRole.USER)
@@ -107,18 +117,38 @@ def test_end_to_end(user_service: UserService, user_account_service: UserAccount
     assert retrieved_agent_2.name == "Иван Иванович"
     assert retrieved_agent_3.name == "Петр Николаевич"
     
-    # Create user request
-    user_request = user_service.create_user_request(user, "http://www.google.com")
+    # Create attachment
+    attachment = Attachment(
+        id=uuid4(),
+        object_name="test_file.txt",
+        content_type="text/plain"
+    )
+    created_attachment = attachment_repository.create_attachment(
+        attachment_id=attachment.id,
+        object_name=attachment.object_name,
+        content_type=attachment.content_type
+    )
+    
+    # Create user request with attachment
+    user_request = UserRequest(
+        user_id=user.id,
+        attachments=[created_attachment],
+        price=100.0,
+        description="Test user request"
+    )
+    created_user_request = user_service.create_user_request(user, user_request.price, user_request.description, user_request.attachments)
     
     # Verify user request creation
-    retrieved_user_request = user_accounts_repository.get_user_request_by_id(user_request.id)
-    assert retrieved_user_request.advert_url == "http://www.google.com"
+    retrieved_user_request = user_accounts_repository.get_user_request_by_id(created_user_request.id)
+    assert retrieved_user_request.description == "Test user request"
+    assert len(retrieved_user_request.attachments) == 1
+    assert retrieved_user_request.attachments[0].object_name == "test_file.txt"
     
     # Create trial
-    trial = trial_service.create_trial(user_request, "Это контекст")
+    trial = trial_service.create_trial(created_user_request, "Это контекст")
     
     # Verify trial creation
-    retrieved_trial = trial_service.get_trial_by_user_request(user_request.id)
+    retrieved_trial = trial_service.get_trial_by_user_request(created_user_request.id)
     assert retrieved_trial.context == "Это контекст"
     assert len(retrieved_trial.agents) == 0  # No agents added yet
     
@@ -138,7 +168,7 @@ def test_end_to_end(user_service: UserService, user_account_service: UserAccount
     # Deduct funds from user account for trial
     trial_price = trial_controller.get_trial_price()
     with pytest.raises(InsufficientFundsError):
-        user_account_service.deduct(user_account, trial_price, trial, user_request)
+        user_account_service.deduct(user_account, trial_price, trial, created_user_request)
     
     # Verify user account balance after deduction
     final_user_account = user_account_service.get_user_account(user)
@@ -160,5 +190,3 @@ def test_end_to_end(user_service: UserService, user_account_service: UserAccount
     # Количество раундов * количество агентов (без координатора) +
     # 1 финальный ответ от координатора
     assert len(responses) == (len(trial.agents) - 1) * trial.max_rounds + (trial.max_rounds + 1) + 2
-
-    

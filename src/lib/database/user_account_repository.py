@@ -232,7 +232,11 @@ class UserAccountsRepository:
         self.session.add(db_user_request)
         self.session.commit()
         self.session.refresh(db_user_request)
-        return UserRequest(**db_user_request.model_dump())
+        
+        dumped = db_user_request.model_dump()
+        if 'attachments' not in dumped:
+            dumped["attachments"] = []
+        return UserRequest(**dumped)
 
     def delete_user_request(self, request_id: UUID) -> None:
         statement = select(UserRequestSchema).where(UserRequestSchema.id == request_id)

@@ -20,7 +20,9 @@ def user_request():
     return UserRequest(
         id=uuid.uuid4(),
         user_id=uuid.uuid4(),
-        advert_url="http://example.com"
+        attachments=[],  
+        price=100.0,     
+        description="Test user request"  
     )
 
 @pytest.fixture
@@ -45,6 +47,7 @@ def trial(user_request, agent):
         max_rounds=5
     )
 
+@pytest.mark.unit
 def test_create_trial(trial_service, trial_repository_mock, user_request):
     context = "Test car description"
     max_rounds = 5
@@ -69,6 +72,7 @@ def test_create_trial(trial_service, trial_repository_mock, user_request):
     assert created_trial.context == context
     assert created_trial.max_rounds == max_rounds
 
+@pytest.mark.unit
 def test_get_trial_by_user_request(trial_service, trial_repository_mock, user_request, trial):
     trial_repository_mock.get_trial_by_user_request_id.return_value = trial
 
@@ -77,6 +81,7 @@ def test_get_trial_by_user_request(trial_service, trial_repository_mock, user_re
     trial_repository_mock.get_trial_by_user_request_id.assert_called_once_with(user_request.id)
     assert retrieved_trial == trial
 
+@pytest.mark.unit
 def test_delete_trial(trial_service, trial_repository_mock, trial):
     trial_repository_mock.delete_trial.return_value = None
 
@@ -84,6 +89,7 @@ def test_delete_trial(trial_service, trial_repository_mock, trial):
 
     trial_repository_mock.delete_trial.assert_called_once_with(trial.id)
 
+@pytest.mark.unit
 def test_list_trials(trial_service, trial_repository_mock, trial):
     trial_repository_mock.list_trials.return_value = [trial]
 
