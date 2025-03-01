@@ -76,3 +76,9 @@ docker-compose up -d
 ```
 
 7. Перейти по адресу http://localhost:8080
+
+# Примеры обсуждений
+В данном репозитории также есть примеры обсуждений: 
+- trial_example_1.md
+- trial_example_2.md
+- trial_example_3.md
