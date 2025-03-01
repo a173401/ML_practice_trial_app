@@ -23,7 +23,7 @@ def show_page(api_client: APIClient):
         agents = api_client.list_agents()
         selected_agents = st.multiselect("Выберите агентов для анализа", agents, default=agents)
         # Зона drag and drop для отправки фотографий автомобиля
-        uploaded_files = st.file_uploader("Загрузите фотографии автомобиля", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+        uploaded_files = st.file_uploader("Загрузите фотографии автомобиля", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True)
         
         if st.form_submit_button("Создать обсуждение"):
             try:

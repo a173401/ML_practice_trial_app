@@ -1,5 +1,7 @@
 import pika
 import json
+import random
+import time
 from uuid import UUID
 from pydantic import BaseModel
 from lib.user_service import UserService
@@ -44,6 +46,14 @@ except Exception as e:
     logging.error(f"Failed to declare queues and exchange: {e}")
     raise
 
+
+bothub_token = settings.bothub_token
+random_sleep = random.uniform(0, 10)
+time.sleep(random_sleep)
+
+provider = BothubProvider("https://bothub.chat/api/v2", token=bothub_token)
+provider.send_message("скажи ок")
+
 # Function to process the message
 def process_message(ch, method, properties, body):
     try:
@@ -75,8 +85,7 @@ def process_message(ch, method, properties, body):
         logging.info(f"User request retrieved: {user_request_to_process}")
 
         # Initialize the provider and context builder
-        bothub_token = settings.bothub_token
-        provider = BothubProvider("https://bothub.chat/api/v2", token=bothub_token, chat_id=settings.bothub_chat_id)
+        
         provider.set_system_context("Тебя зовут Игорь, ты профессиональный оценщик автомобилей. Твой глаз наметан ты видишь все недостатки и тебя невозможно обмануть. Твои отчеты всегда верны и точны")
         provider.set_model("qwen-2-vl-72b-instruct")
         builder = ContextBuilder("Оценка автомобиля")
@@ -99,7 +108,7 @@ def process_message(ch, method, properties, body):
             logging.info(f"Analyzed photo {i}: {photo_analysis}")
 
         # Analyze the advertisement text
-        provider.set_model("eva-qwen-2.5-72b")
+        provider.set_model("claude-3.5-haiku")
         auto_report = user_request_to_process.description
         advertisment_data = provider.send_message(
             f"""Дано объявление по машине:

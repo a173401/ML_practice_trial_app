@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     image: ml_practice
-    volumes:
-      - ./src:/opt/app/
+    # volumes:
+    #   - ./src:/opt/app/
     command: uvicorn app:app --host 0.0.0.0 --port 8000
     environment:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
@@ -35,8 +35,8 @@ services:
       dockerfile: Dockerfile
     image: ml_practice
     command: streamlit run webui/web_main.py --server.port 8501
-    volumes:
-      - ./src:/opt/app/
+    # volumes:
+    #   - ./src:/opt/app/
     environment:
         - PYTHONPATH=.
         - BACKEND_URL=http://app:8000
@@ -65,8 +65,8 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET}
       - BOTHUB_TOKEN=${BOTHUB_TOKEN}
       - BOTHUB_CHAT_ID=${BOTHUB_CHAT_ID}
-   volumes:
-     - ./src:/opt/app/
+  #  volumes:
+  #    - ./src:/opt/app/
    depends_on:
     - app
     - database
@@ -101,8 +101,8 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET}
       - BOTHUB_TOKEN=${BOTHUB_TOKEN}
       - BOTHUB_CHAT_ID=${BOTHUB_CHAT_ID}
-    volumes:
-      - ./src:/opt/app/
+    # volumes:
+    #   - ./src:/opt/app/
     depends_on:
      - analysis_worker
     restart: always
@@ -134,7 +134,6 @@ services:
   minio:
     restart: on-failure
     image: docker.io/minio/minio:RELEASE.2025-02-07T23-21-09Z-cpuv1
-    container_name: mlflow_s3
     ports:
         - "9000:9000"
         - "9001:9001"
@@ -158,16 +157,9 @@ services:
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-    entrypoint: >
-      bash -c "
-      mc alias set minio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
-      if ! mc ls minio | grep --quiet bucket; then
-        mc mb minio/attachments
-        # mc ilm add minio/attachments --expiry 1d
-      else
-        echo 'bucket already exists'
-      fi
-      "
+    volumes:
+      - ./init_bucket.sh:/tmp/init_bucket.sh
+    entrypoint: ./tmp/init_bucket.sh
 
   database:
     image: docker.io/postgres:17.2

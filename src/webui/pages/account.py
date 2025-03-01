@@ -56,39 +56,42 @@ def show_page(api_client: APIClient):
     try:
         transactions = api_client.get_user_transactions()
         # Преобразуем список транзакций в DataFrame
-        df = pd.DataFrame([json.loads(t.model_dump_json()) for t in transactions])
-        # Определяем цвета для строк в зависимости от типа операции
-        def color_row(row):
-            if row['operation_type'] in ['deposit', 'admin_deposit']:
-                return ['background-color: green'] * len(row)
-            elif row['operation_type'] == 'request':
-                return ['background-color: red'] * len(row)
-            else:
-                return ['background-color: white'] * len(row)
-        # Применяем цветовую разметку к DataFrame
-        df = df[["created_at", "operation_type", "amount", "description"]]
-        styled_df = df.style.apply(color_row, axis=1)
-        
-        # Конфигурация колонок
-        column_config = {
-            "created_at": st.column_config.DatetimeColumn(
-                "Дата и время",
-                format="DD.MM.YYYY HH:mm:ss"
-            ),
-            "operation_type": st.column_config.TextColumn(
-                "Тип операции"
-            ),
-            "amount": st.column_config.NumberColumn(
-                "Сумма",
-                format="%.2f"
-            ),
-            "description": st.column_config.TextColumn(
-                "Описание"
-            )
-        }
-        
-        # Отображаем DataFrame в Streamlit с конфигурацией колонок
-        st.dataframe(styled_df, column_config=column_config, use_container_width=True)
+        if transactions:
+            df = pd.DataFrame([json.loads(t.model_dump_json()) for t in transactions])
+            # Определяем цвета для строк в зависимости от типа операции
+            def color_row(row):
+                if row['operation_type'] in ['deposit', 'admin_deposit']:
+                    return ['background-color: green'] * len(row)
+                elif row['operation_type'] == 'user_request':
+                    return ['background-color: red'] * len(row)
+                else:
+                    return ['background-color: white'] * len(row)
+            # Применяем цветовую разметку к DataFrame
+            df = df[["created_at", "operation_type", "amount", "description"]]
+            styled_df = df.style.apply(color_row, axis=1)
+            
+            # Конфигурация колонок
+            column_config = {
+                "created_at": st.column_config.DatetimeColumn(
+                    "Дата и время",
+                    format="DD.MM.YYYY HH:mm:ss"
+                ),
+                "operation_type": st.column_config.TextColumn(
+                    "Тип операции"
+                ),
+                "amount": st.column_config.NumberColumn(
+                    "Сумма",
+                    format="%.2f"
+                ),
+                "description": st.column_config.TextColumn(
+                    "Описание"
+                )
+            }
+            
+            # Отображаем DataFrame в Streamlit с конфигурацией колонок
+            st.dataframe(styled_df, column_config=column_config, use_container_width=True)
+        else:
+            st.info("Нет операций для отображения")
     except Exception as e:
         st.error(f"Ошибка загрузки операций: {str(e)}")
 

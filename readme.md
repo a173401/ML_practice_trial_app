@@ -22,3 +22,57 @@
 - Требуется предусмотреть валидацию данных. Если в загружаемой выборке присутствуют ошибочные данные, то возвращать их пользователю, а над валидными данными производить предсказание
 - Требуется предусмотреть проверку на положительный баланс при запросах к системе.
 - Роль администратор подразумевает возможность пополнять баланс пользователям (модерировать пополнения от пользователей) и просматривать все транзакции.
+
+# Запуск сервиса
+
+Для запуска сервиса необходимо выполнить следующие шаги:
+1. Собрать Docker образы для всех сервисов, используя команду `docker-compose build`.
+2. Составить .env файл с переменными окружениями. Ряд параметров будет сначала пустым, мы заполним его позднее. Например:
+
+```env
+# RabbitMQ credentials
+RABBITMQ_USER=admin
+RABBITMQ_PASSWORD=securepassword
+RABBITMQ_HOST=localhost
+
+# PostgreSQL credentials
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=securepassword
+POSTGRES_DB=ml_practice_db
+POSTGRES_HOST=localhost
+
+# Redis password
+REDIS_PASSWORD=securepassword
+REDIS_HOST=localhost
+
+# Admin password
+ADMIN_PASSWORD=admin123
+
+# Minio
+MINIO_ROOT_USER=root
+MINIO_ROOT_PASSWORD=rootpassword
+MINIO_ACCESS_KEY=
+MINIO_SECRET_KEY=
+MINIO_BUCKET=attachments
+
+BOTHUB_TOKEN=
+```
+3. Запустим minio и создадим бакет с данными для авторизации ACCESS_KEY и SECRET_KEY:
+
+```bash
+docker-compose up -d minio-create-bucket
+```
+
+Из логов сервиса minio-create-bucket необходимо взять ACCESS_KEY и SECRET_KEY. Добавьте эти значения в поля MINIO_ACCESS_KEY и MINIO_SECRET_KEY в файле .env.
+
+4. Зарегистрируйтесь на https://bothub.chat/, оплатите план не ниже Premium и получите API ключ https://bothub.chat/profile/for-developers.
+
+5. Добавьте BOTHUB_TOKEN в файл .env
+
+6. Запустим проект:
+
+```bash
+docker-compose up -d
+```
+
+7. Перейти по адресу http://localhost:8080

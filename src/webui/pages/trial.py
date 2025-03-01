@@ -8,6 +8,9 @@ import json
 
 def show_active_trials(api_client: APIClient):
     st.subheader("Активные обсуждения")
+    if st.button("🆕 Создать новое обсуждение"):
+            st.session_state.current_trial = None
+            st.switch_page("pages/trial_create_form.py")
     try:
         active_trials = api_client.get_active_trials()
         
@@ -26,15 +29,11 @@ def show_active_trials(api_client: APIClient):
                 st.switch_page("pages/trial_details.py")
                 
             st.divider()
-        
-        if st.button("🆕 Создать новое обсуждение"):
-            st.session_state.current_trial = None
-            st.switch_page("pages/trial_create_form.py")
-            
-    except NotFoundException:
-        st.info("Нет активных обсуждений")
     except Exception as e:
-        st.error(f"Ошибка загрузки активных обсуждений: {str(e)}")
+        if e.__class__.__name__ == NotFoundException.__name__:
+            st.info("Нет активных обсуждений")
+        else:
+            st.error(f"Ошибка загрузки активных обсуждений: {str(e)}")
 
 def show_completed_trials(api_client: APIClient):
     st.subheader("История обсуждений")
@@ -58,10 +57,11 @@ def show_completed_trials(api_client: APIClient):
                 
             st.divider()
             
-    except NotFoundException:
-        st.info("Нет завершенных обсуждений")
     except Exception as e:
-        st.error(f"Ошибка загрузки завершенных обсуждений: {str(e)}")
+        if e.__class__.__name__ == NotFoundException.__name__:
+            st.info("Нет завершенных обсуждений")
+        else:
+            st.error(f"Ошибка загрузки завершенных обсуждений: {str(e)}")
 
 def show_page(api_client: APIClient):
     st.header("Обсуждения")

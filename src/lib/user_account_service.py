@@ -24,6 +24,9 @@ class UserAccountService:
     
     def get_user_account(self, user: User) -> Account:
         return self.user_repository.get_account_by_user_id(user.id)
+    
+    def get_user_accout_by_user_id(self, user_id: int) -> Account:
+        return self.user_repository.get_account_by_user_id(user_id)
 
     def deposit(self, 
                 account: Account, 

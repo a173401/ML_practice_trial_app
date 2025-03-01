@@ -54,5 +54,10 @@ class APIClient:
         response = self.session.delete(url, stream=stream)
         return self._handle_response(response, stream)
 
+    def delete_with_body(self, path, body):
+        url = f'{self.base_url}{path}'
+        response = self.session.delete(url, json=body)
+        return self._handle_response(response, stream=False)
+
     def close(self):
         self.session.close()

@@ -20,10 +20,9 @@ class Settings(BaseSettings):
 
 class WorkerSettings(Settings):
     bothub_token: str = Field("BOTHUB_TOKEN")
-    bothub_chat_id: str = Field("BOTHUB_CHAT_ID")
 
 class SystemConfig(BaseModel):
     cost_per_request: float = 1.0
-    max_rounds: int = 5
+    max_rounds: int = 2
     min_balance: float = 0.0
     default_credits: float = 50.0
